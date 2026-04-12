@@ -33,3 +33,12 @@ class banco_url:
                 if url == home + sub:
                     return True
             return False
+    
+    def get_subpaginas(self, url: str) -> list:
+        """Retorna os links disponíveis a partir de uma URL."""
+        if url in self.__banco:
+            return self.__banco[url]
+        return []
+
+    def _str_(self):
+        return f"BancoURL({len(self.__banco)} URLs cadastradas)"
