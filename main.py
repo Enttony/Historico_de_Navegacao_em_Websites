@@ -1,12 +1,14 @@
 # importa as classes do projeto
 from historico import Historico
 from banco_url import banco_url
-
+from browser import Browser
 
 def main():
     # cria os objetos principais
     historico = Historico()
     banco = banco_url()
+
+    meu_browser = Browser(historico, banco)
 
     # carrega as urls do arquivo
     try:
@@ -17,6 +19,8 @@ def main():
     # loop principal
     while True:
         try:
+            meu_browser.exibir_estado()
+
             # recebe comando do usuário
             comando = input("Digite URL ou comando: ")
 
@@ -27,15 +31,7 @@ def main():
 
             # volta para página anterior
             elif comando == "#back":
-                if historico.historico_vazio():
-                    print("Histórico vazio")
-                else:
-                    historico.remover()
-
-                    if not historico.historico_vazio():
-                        print("Página atual:", historico.url_atual())
-                    else:
-                        print("Histórico vazio")
+                meu_browser.voltar()
 
             # mostra histórico
             elif comando == "#showhist":
@@ -83,11 +79,7 @@ def main():
 
             # navegação normal
             else:
-                if banco.url_existe(comando):
-                    historico.adcionar(comando)
-                    print("Página encontrada")
-                else:
-                    print("Página não encontrada")
+                meu_browser.navegar(comando)
 
         # tratamento de erro
         except Exception as erro:
