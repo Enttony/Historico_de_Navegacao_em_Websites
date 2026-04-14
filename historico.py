@@ -8,9 +8,11 @@ class Historico:
         self.__historico.append(url)
     #Retira a url
     def remover(self):
+    # verifica se está vazio antes de remover
+        if self.historico_vazio():
+            raise IndexError("Não é possível remover, histórico vazio")
+
         self.__historico.pop()
-        if self.historico_vazio() == True:
-            raise IndexError('Não é possível remover, histórico vazio')
     #Demonstrar qual url atual
     def url_atual(self):
         if self.historico_vazio() == True:
@@ -31,15 +33,4 @@ class Historico:
     
     def __str__(self):
         return "".join(f'[{url}]' for url in self.__historico)
-teste = Historico()
-
-teste.adcionar('www.teste.com')
-teste.adcionar('www.youtube.com')
-teste.adcionar('www.ifpb.com')
-teste.adcionar('www.google.com')
-teste.adcionar('www.globo.com')
-
-# teste.remover()
-
-teste.exibir_historico()
 
