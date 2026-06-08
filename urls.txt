@@ -1,4 +1,14 @@
+www.ifpb.edu.br /tsi /rc
+www.ifpb.edu.br/tsi /professores /alunos
+www.ifpb.edu.br/tsi/professores
+www.ifpb.edu.br/tsi/alunos
+www.ifpb.edu.br/rc /coordenacao
+www.ifpb.edu.br/rc/coordenacao /matriz_curricular
+www.ifpb.edu.br/rc/coordenacao/matriz_curricular
 www.google.com
 www.youtube.com
-www.ifpb.com
 www.globo.com
+www.apple.com /iphone /mac
+www.apple.com/iphone /modelos
+www.apple.com/iphone/modelos
+www.apple.com/mac
