@@ -1,89 +1,116 @@
-# importa as classes do projeto
+"""
+Ponto de entrada principal do simulador de navegação web.
+
+Responsável por:
+    - Inicializar os objetos do sistema
+    - Carregar o banco de URLs do arquivo
+    - Executar o loop principal de interação com o usuário
+    - Despachar cada comando para o método correto
+"""
+
 from historico import Historico
-from banco_url import banco_url
+from banco_url import BancoURL
 from browser import Browser
 
-def main():
-    # cria os objetos principais
+# Arquivo com as URLs cadastradas
+ARQUIVO_URLS = "urls.txt"
+
+
+def exibir_ajuda() -> None:
+    """Exibe a lista de todos os comandos disponíveis no sistema."""
+    print("\n" + "=" * 50)
+    print("              AJUDA — COMANDOS")
+    print("=" * 50)
+    comandos = [
+        ("#help",             "Exibe esta mensagem de ajuda"),
+        ("#back",             "Volta para a última página visitada"),
+        ("#showhist",         "Mostra o histórico de páginas"),
+        ("#adicionar",        "Cadastra uma nova URL (modo interativo)"),
+        ("#remover <url>",    "Remove uma URL do banco e do arquivo"),
+        ("#sair",             "Encerra o navegador"),
+        ("<url>",             "Navega para uma URL completa"),
+        ("/<link>",           "Acessa um link interno da página atual"),
+    ]
+    for cmd, desc in comandos:
+        print(f"  {cmd:<22} → {desc}")
+    print("=" * 50)
+
+
+def main() -> None:
+    """Função principal: inicializa o sistema e roda o loop de interação."""
+
+    # ---------- inicialização ----------
     historico = Historico()
-    banco = banco_url()
+    banco = BancoURL()
+    browser = Browser(historico, banco)
 
-    meu_browser = Browser(historico, banco)
-
-    # carrega as urls do arquivo
     try:
-        banco.ler_arquivo("urls.txt")
-    except Exception as erro:
-        print(f"Erro ao carregar urls: {erro}")
+        banco.ler_arquivo(ARQUIVO_URLS)
+    except FileNotFoundError as erro:
+        print(f"Aviso: {erro}")
+        print("O sistema iniciará sem URLs pré-cadastradas.\n")
 
-    # loop principal
+    # ---------- loop principal ----------
     while True:
         try:
-            meu_browser.exibir_estado()
+            browser.exibir_estado()
+            entrada = input("  url: ").strip()
 
-            # recebe comando do usuário
-            comando = input("Digite URL ou comando: ")
+            # --- comandos especiais ---
 
-            # encerra o navegador
-            if comando == "#sair":
-                print("Encerrando navegador...")
+            if entrada == "#sair":
+                print("\n  Encerrando navegador. Até mais!\n")
                 break
 
-            # volta para página anterior
-            elif comando == "#back":
-                meu_browser.voltar()
+            elif entrada == "#help":
+                exibir_ajuda()
 
-            # mostra histórico
-            elif comando == "#showhist":
+            elif entrada == "#back":
+                browser.voltar()
+
+            elif entrada == "#showhist":
+                print()
                 if historico.historico_vazio():
-                    print("Histórico vazio")
+                    print("  Histórico vazio.")
                 else:
+                    print("  Histórico (mais recente → mais antigo):")
                     historico.exibir_historico()
 
-            # adiciona nova url apenas ao histórico
-            elif comando.startswith("#add "):
-                url = comando.replace("#add ", "")
-                historico.adcionar(url)
-                print("URL adicionada ao histórico")
+            elif entrada == "#adicionar":
+                browser.cadastrar_url_interativo(ARQUIVO_URLS)
 
-            # adiciona nova url ao arquivo e ao banco
-            elif comando.startswith("#adicionar "):
-                url = comando.replace("#adicionar ", "")
+            elif entrada.startswith("#remover "):
+                url_remover = entrada.replace("#remover ", "", 1).strip()
+                if not banco.url_existe(url_remover):
+                    print(f"\n  ✗ URL '{url_remover}' não encontrada no banco.")
+                else:
+                    # remove do banco em memória e regrava o arquivo
+                    urls_restantes = {
+                        u: banco.get_subpaginas(u)
+                        for u in banco.listar_urls()
+                        if u != url_remover
+                    }
+                    # recria o banco sem a url removida
+                    novo_banco = BancoURL()
+                    for u, subs in urls_restantes.items():
+                        novo_banco.cadastrar_url(u, subs)
+                    novo_banco.salvar_no_arquivo(ARQUIVO_URLS)
+                    banco.ler_arquivo(ARQUIVO_URLS)
+                    print(f"\n  ✔ URL '{url_remover}' removida com sucesso.")
 
-                with open("urls.txt", "a", encoding="utf-8") as arquivo:
-                    arquivo.write(f"\n{url}")
+            elif entrada.startswith("#"):
+                print(f"\n  ✗ Comando '{entrada}' não reconhecido.")
+                print("     Digite #help para ver os comandos disponíveis.")
 
-                # recarrega as urls do arquivo
-                banco.ler_arquivo("urls.txt")
+            # --- navegação (URL completa ou link interno) ---
+            elif entrada:
+                browser.navegar(entrada)
 
-                print("URL adicionada ao arquivo")
-
-            # remove url do arquivo e atualiza o banco
-            elif comando.startswith("#remover "):
-                url = comando.replace("#remover ", "")
-
-                # lê todas as linhas do arquivo
-                with open("urls.txt", "r", encoding="utf-8") as arquivo:
-                    linhas = arquivo.readlines()
-
-                # reescreve sem a url removida
-                with open("urls.txt", "w", encoding="utf-8") as arquivo:
-                    for linha in linhas:
-                        if linha.strip() != url:
-                            arquivo.write(linha)
-
-                # recarrega as urls do arquivo
-                banco.ler_arquivo("urls.txt")
-
-                print("URL removida do arquivo")
-
-            # navegação normal
-            else:
-                meu_browser.navegar(comando)
-
-        # tratamento de erro
+        except KeyboardInterrupt:
+            print("\n\n  Navegador encerrado pelo usuário.\n")
+            break
         except Exception as erro:
-            print(f"Erro: {erro}")
+            print(f"\n  Erro inesperado: {erro}")
 
 
 if __name__ == "__main__":
